@@ -3,12 +3,16 @@ import "dotenv/config";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
+import { createRequire } from "module";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 import { registerAllTools } from "./tools/index.js";
 import { NETWORK, API_URL } from "./config/index.js";
 import { redactSensitive } from "./utils/redact.js";
+
+const require = createRequire(import.meta.url);
+const packageJson = require("../package.json");
 
 // =============================================================================
 // AUTO-INSTALL FOR CLAUDE CODE
@@ -97,7 +101,7 @@ else if (process.argv.includes("--install") || process.argv.includes("install"))
   // Normal MCP server mode
   const server = new McpServer({
     name: "aibtc-mcp-server",
-    version: "1.0.0",
+    version: packageJson.version,
   });
 
   // Register all tools from the modular registry
