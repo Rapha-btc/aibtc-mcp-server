@@ -19,11 +19,10 @@ describe("validation", () => {
       ).toBe(true);
     });
 
-    it("should reject testnet address with ST prefix (not in regex)", () => {
-      // Current regex only accepts SP or SM, not ST for testnet
+    it("should accept testnet address with ST prefix", () => {
       expect(
         isValidStacksAddress("ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM")
-      ).toBe(false);
+      ).toBe(true);
     });
 
     it("should reject empty string", () => {

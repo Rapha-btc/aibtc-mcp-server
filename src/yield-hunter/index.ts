@@ -12,6 +12,7 @@ import { getHiroApi } from "../services/hiro-api.js";
 import { ZEST_ASSETS } from "../config/contracts.js";
 import { NETWORK } from "../config/networks.js";
 import type { Account } from "../transactions/builder.js";
+import { redactSensitive } from "../utils/redact.js";
 import fs from "fs";
 import fsPromises from "fs/promises";
 import path from "path";
@@ -98,7 +99,7 @@ function log(message: string): void {
     try {
       fs.appendFileSync(LOG_FILE_PATH, logLine + "\n");
     } catch (error: any) {
-      console.error(`Failed to write to log file: ${error.message}`);
+      console.error(`Failed to write to log file: ${redactSensitive(error.message)}`);
     }
   }
 }
@@ -154,7 +155,7 @@ async function runCheck(account: Account, config: YieldHunterConfig, state: Yiel
           timestamp: new Date().toISOString(),
         });
       } catch (error: any) {
-        log(`Failed to deposit: ${error.message}`);
+        log(`Failed to deposit: ${redactSensitive(error.message)}`);
       }
     } else {
       log(`[DRY RUN] Would deposit ${formatSats(walletBalance)} to Zest`);
@@ -214,7 +215,7 @@ async function startDaemon(config: YieldHunterConfig): Promise<void> {
     account = await walletManager.unlock(activeWalletId, password);
     log(`Wallet unlocked: ${account.address}`);
   } catch (error: any) {
-    log(`Failed to unlock wallet: ${error.message}`);
+    log(`Failed to unlock wallet: ${redactSensitive(error.message)}`);
     process.exit(1);
   }
 
@@ -239,7 +240,7 @@ async function startDaemon(config: YieldHunterConfig): Promise<void> {
     try {
       await runCheck(account, config, state);
     } catch (error: any) {
-      log(`Error during check: ${error.message}`);
+      log(`Error during check: ${redactSensitive(error.message)}`);
     }
   }, config.checkIntervalMs);
 

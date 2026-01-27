@@ -3,7 +3,6 @@ import { parseArgToClarityValue } from "../../src/transactions/clarity-values.js
 import {
   ClarityType,
   cvToString,
-  cvToJSON,
 } from "@stacks/transactions";
 
 describe("parseArgToClarityValue", () => {

@@ -1,3 +1,5 @@
+import { redactSensitive } from "./redact.js";
+
 /**
  * Base error class for aibtc-mcp-server
  */
@@ -114,9 +116,6 @@ export class InvalidMnemonicError extends WalletError {
  * Format error for tool response
  */
 export function formatError(error: unknown): { message: string; code?: string; details?: unknown } {
-  // Import redactSensitive dynamically to avoid circular dependency
-  const { redactSensitive } = require("./redact.js");
-
   if (error instanceof AibtcError) {
     return {
       message: redactSensitive(error.message),

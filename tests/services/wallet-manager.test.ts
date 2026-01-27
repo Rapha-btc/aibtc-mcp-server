@@ -327,7 +327,7 @@ describe("WalletManager", () => {
     });
 
     it("should switch active wallet", async () => {
-      const wallet1 = await walletManager.createWallet("wallet1", "password123");
+      await walletManager.createWallet("wallet1", "password123");
       const wallet2 = await walletManager.createWallet("wallet2", "password456");
 
       await walletManager.switchWallet(wallet2.walletId);

@@ -86,7 +86,7 @@ if (process.argv[2] === "yield-hunter") {
       // Don't exit - daemon runs until interrupted
     })
     .catch((error) => {
-      console.error("❌ Yield Hunter error:", error.message);
+      console.error("❌ Yield Hunter error:", redactSensitive(error.message));
       process.exit(1);
     });
 }
@@ -95,7 +95,7 @@ else if (process.argv.includes("--install") || process.argv.includes("install"))
   installToClaudeCode()
     .then(() => process.exit(0))
     .catch((error) => {
-      console.error("❌ Installation failed:", error.message);
+      console.error("❌ Installation failed:", redactSensitive(error.message));
       process.exit(1);
     });
 } else {
