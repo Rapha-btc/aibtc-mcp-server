@@ -8,6 +8,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 
 import { registerAllTools } from "./tools/index.js";
 import { NETWORK, API_URL } from "./config/index.js";
+import { redactSensitive } from "./utils/redact.js";
 
 // =============================================================================
 // AUTO-INSTALL FOR CLAUDE CODE
@@ -111,7 +112,7 @@ else if (process.argv.includes("--install") || process.argv.includes("install"))
   }
 
   main().catch((error) => {
-    console.error("Fatal error:", error);
+    console.error("Fatal error:", redactSensitive(String(error)));
     process.exit(1);
   });
 }
