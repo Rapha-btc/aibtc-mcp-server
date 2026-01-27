@@ -3,13 +3,24 @@ import axios, { type AxiosInstance } from "axios";
 import { withPaymentInterceptor } from "x402-stacks";
 import { mnemonicToAccount, type Network } from "./wallet.js";
 
+/**
+ * @deprecated This module is superseded by src/services/x402.service.ts.
+ * - createApiClient → src/services/x402.service.ts createX402Client()
+ * - getWalletAddress, getAccount → src/services/x402.service.ts
+ * - NETWORK, API_URL → src/config/networks.ts
+ * This file will be removed in a future version.
+ */
+
+/** @deprecated Use NETWORK from src/config/networks.ts */
 export const NETWORK: Network =
   process.env.NETWORK === "mainnet" ? "mainnet" : "testnet";
+/** @deprecated Use API_URL from src/config/networks.ts */
 export const API_URL = process.env.API_URL || "https://x402.biwas.xyz";
 
 // Cache clients by base URL
 const clientCache: Map<string, AxiosInstance> = new Map();
 
+/** @deprecated Use createX402Client from src/services/x402.service.ts */
 export async function createApiClient(baseUrl?: string): Promise<AxiosInstance> {
   const url = baseUrl || API_URL;
 
@@ -70,6 +81,7 @@ export async function createApiClient(baseUrl?: string): Promise<AxiosInstance> 
   return client;
 }
 
+/** @deprecated Use getWalletAddress from src/services/x402.service.ts */
 export function getWalletAddress(): Promise<string> {
   const mnemonic = process.env.CLIENT_MNEMONIC || "";
   if (!mnemonic) {
@@ -78,6 +90,7 @@ export function getWalletAddress(): Promise<string> {
   return mnemonicToAccount(mnemonic, NETWORK).then((account) => account.address);
 }
 
+/** @deprecated Use getAccount from src/services/x402.service.ts */
 export async function getAccount() {
   const mnemonic = process.env.CLIENT_MNEMONIC || "";
   if (!mnemonic) {
