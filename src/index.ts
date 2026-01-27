@@ -10,6 +10,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { registerAllTools } from "./tools/index.js";
 import { NETWORK, API_URL } from "./config/index.js";
 import { redactSensitive } from "./utils/redact.js";
+import { initializeStorage } from "./utils/storage.js";
 
 const require = createRequire(import.meta.url);
 const packageJson = require("../package.json");
@@ -108,6 +109,7 @@ else if (process.argv.includes("--install") || process.argv.includes("install"))
   registerAllTools(server);
 
   async function main() {
+    await initializeStorage();
     const transport = new StdioServerTransport();
     await server.connect(transport);
     console.error("aibtc-mcp-server running on stdio");
