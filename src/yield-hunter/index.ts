@@ -12,7 +12,8 @@ import { getHiroApi } from "../services/hiro-api.js";
 import { ZEST_ASSETS } from "../config/contracts.js";
 import { NETWORK } from "../config/networks.js";
 import type { Account } from "../transactions/builder.js";
-import fs from "fs/promises";
+import fs from "fs";
+import fsPromises from "fs/promises";
 import path from "path";
 import os from "os";
 
@@ -58,7 +59,7 @@ const STATE_FILE = path.join(os.homedir(), ".aibtc", "yield-hunter-state.json");
 
 async function loadState(): Promise<YieldHunterState> {
   try {
-    const content = await fs.readFile(STATE_FILE, "utf8");
+    const content = await fsPromises.readFile(STATE_FILE, "utf8");
     return JSON.parse(content);
   } catch {
     return {
@@ -71,12 +72,15 @@ async function loadState(): Promise<YieldHunterState> {
 }
 
 async function saveState(state: YieldHunterState): Promise<void> {
-  await fs.writeFile(STATE_FILE, JSON.stringify(state, null, 2));
+  await fsPromises.writeFile(STATE_FILE, JSON.stringify(state, null, 2));
 }
 
 // ============================================================================
 // Helpers
 // ============================================================================
+
+// Global log file path (set by CLI arg)
+let LOG_FILE_PATH: string | null = null;
 
 function formatSats(sats: bigint): string {
   const btc = Number(sats) / 100_000_000;
@@ -85,7 +89,18 @@ function formatSats(sats: bigint): string {
 
 function log(message: string): void {
   const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] ${message}`);
+  const logLine = `[${timestamp}] ${message}`;
+
+  console.log(logLine);
+
+  // Also write to file if --log-file was specified
+  if (LOG_FILE_PATH) {
+    try {
+      fs.appendFileSync(LOG_FILE_PATH, logLine + "\n");
+    } catch (error: any) {
+      console.error(`Failed to write to log file: ${error.message}`);
+    }
+  }
 }
 
 // ============================================================================
@@ -191,6 +206,9 @@ async function startDaemon(config: YieldHunterConfig): Promise<void> {
   // Prompt for password
   const password = await promptPassword();
 
+  // Disable auto-lock for daemon mode BEFORE unlocking
+  await walletManager.setAutoLockTimeout(0);
+
   let account: Account;
   try {
     account = await walletManager.unlock(activeWalletId, password);
@@ -200,8 +218,13 @@ async function startDaemon(config: YieldHunterConfig): Promise<void> {
     process.exit(1);
   }
 
-  // Disable auto-lock for daemon mode
-  await walletManager.setAutoLockTimeout(0);
+  // Defensive verification: ensure auto-lock is actually disabled
+  const sessionInfo = walletManager.getSessionInfo();
+  if (sessionInfo?.expiresAt !== null) {
+    log("WARNING: Auto-lock still active after disabling, forcing null expiry");
+    await walletManager.setAutoLockTimeout(0);
+  }
+  log("Auto-lock disabled for daemon mode (session never expires)");
 
   // Load state
   const state = await loadState();
@@ -323,6 +346,8 @@ export async function main(args: string[]): Promise<void> {
       config.minDepositThreshold = BigInt(arg.split("=")[1]);
     } else if (arg.startsWith("--interval=")) {
       config.checkIntervalMs = parseInt(arg.split("=")[1]) * 1000;
+    } else if (arg.startsWith("--log-file=")) {
+      LOG_FILE_PATH = arg.split("=")[1];
     }
   }
 
@@ -352,11 +377,13 @@ Options:
   --execute, -e         Actually execute transactions (default: dry run)
   --threshold=<sats>    Minimum sBTC (in sats) before depositing (default: 10000)
   --interval=<seconds>  Check interval in seconds (default: 600)
+  --log-file=<path>     Log to file in addition to stdout
 
 Examples:
   npx @aibtc/mcp-server yield-hunter start
   npx @aibtc/mcp-server yield-hunter start --execute
   npx @aibtc/mcp-server yield-hunter start --execute --threshold=100000
+  npx @aibtc/mcp-server yield-hunter start --log-file=/tmp/yield-hunter.log
   npx @aibtc/mcp-server yield-hunter status
 
 Note: Requires a wallet created via the MCP server. Run:
