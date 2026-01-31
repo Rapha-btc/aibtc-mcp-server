@@ -1,24 +1,10 @@
 import { ClarityValue, serializeCV } from "@stacks/transactions";
 import { getApiBaseUrl, type Network } from "../config/networks.js";
 import { parseContractId } from "../config/contracts.js";
-import { getHiroApiKey, getStacksApiUrl } from "../utils/storage.js";
 
 // ============================================================================
 // Types
 // ============================================================================
-
-/**
- * Custom error for Hiro API rate limit responses (429)
- */
-export class HiroApiRateLimitError extends Error {
-  constructor(
-    message: string,
-    public readonly retryAfterSeconds: number
-  ) {
-    super(message);
-    this.name = "HiroApiRateLimitError";
-  }
-}
 
 export interface AccountInfo {
   balance: string;
@@ -269,40 +255,6 @@ export interface FeeEstimation {
   cost_scalar_change_by_byte: number;
 }
 
-/**
- * Nonce information for a Stacks address.
- * Used to detect nonce gaps in the sponsor relay.
- */
-export interface NonceInfo {
-  last_mempool_tx_nonce: number | null;
-  last_executed_tx_nonce: number;
-  possible_next_nonce: number;
-  detected_missing_nonces: number[];
-  detected_mempool_nonces: number[];
-}
-
-/**
- * Fee priorities from the mempool.
- * Values are in micro-STX.
- */
-export interface MempoolFeePriorities {
-  no_priority: number;
-  low_priority: number;
-  medium_priority: number;
-  high_priority: number;
-}
-
-/**
- * Response from /extended/v2/mempool/fees endpoint.
- * Contains fee priorities for different transaction types.
- */
-export interface MempoolFeeResponse {
-  all: MempoolFeePriorities;
-  token_transfer: MempoolFeePriorities;
-  contract_call: MempoolFeePriorities;
-  smart_contract: MempoolFeePriorities;
-}
-
 export interface TokenMetadata {
   name: string;
   symbol: string;
@@ -323,24 +275,19 @@ export interface TokenMetadata {
 // ============================================================================
 
 export class HiroApiService {
-  private defaultBaseUrl: string;
-  private mempoolFeesCache: { data: MempoolFeeResponse; expires: number } | null = null;
+  private baseUrl: string;
+  private apiKey: string;
 
   constructor(private network: Network) {
-    this.defaultBaseUrl = getApiBaseUrl(network);
+    this.baseUrl = getApiBaseUrl(network);
+    this.apiKey = process.env.HIRO_API_KEY || "";
   }
 
-  /**
-   * Helper function to attempt a single fetch request.
-   * Extracted to enable retry logic in the main fetch() method.
-   */
-  private async attemptFetch<T>(path: string, options?: RequestInit): Promise<T> {
-    const apiKey = (await getHiroApiKey()) || process.env.HIRO_API_KEY || "";
-    const baseUrl = (await getStacksApiUrl()) || this.defaultBaseUrl;
-    const url = `${baseUrl}${path}`;
+  private async fetch<T>(path: string, options?: RequestInit): Promise<T> {
+    const url = `${this.baseUrl}${path}`;
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      ...(apiKey ? { "x-hiro-api-key": apiKey } : {}),
+      ...(this.apiKey ? { "x-hiro-api-key": this.apiKey } : {}),
       ...(options?.headers as Record<string, string>),
     };
     const response = await fetch(url, {
@@ -349,46 +296,11 @@ export class HiroApiService {
     });
 
     if (!response.ok) {
-      if (response.status === 429) {
-        const parsed = parseInt(response.headers.get("Retry-After") ?? "", 10);
-        const retryAfterSeconds = isNaN(parsed) ? 60 : parsed;
-        throw new HiroApiRateLimitError(
-          `Hiro API rate limit exceeded. Retry after ${retryAfterSeconds}s`,
-          retryAfterSeconds
-        );
-      }
-
       const errorText = await response.text();
       throw new Error(`Hiro API error (${response.status}): ${errorText}`);
     }
 
     return response.json();
-  }
-
-  /**
-   * Fetch data from the Hiro API with automatic retry on rate limits.
-   * Retries up to 3 times with exponential backoff (1s, 2s, 4s).
-   * Respects Retry-After header if present.
-   */
-  private async fetch<T>(path: string, options?: RequestInit): Promise<T> {
-    const backoffDelays = [1000, 2000, 4000];
-    const maxAttempts = backoffDelays.length + 1;
-
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      try {
-        return await this.attemptFetch<T>(path, options);
-      } catch (error) {
-        if (!(error instanceof HiroApiRateLimitError) || attempt === maxAttempts - 1) {
-          throw error;
-        }
-
-        const retryAfterMs = error.retryAfterSeconds * 1000;
-        const delay = Math.max(retryAfterMs, backoffDelays[attempt]);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    }
-
-    throw new Error("Unreachable: loop always returns or throws");
   }
 
   // ==========================================================================
@@ -423,10 +335,6 @@ export class HiroApiService {
   async getAccountNonce(address: string): Promise<number> {
     const info = await this.getAccountInfo(address);
     return info.nonce;
-  }
-
-  async getNonceInfo(address: string): Promise<NonceInfo> {
-    return this.fetch<NonceInfo>(`/extended/v1/address/${address}/nonces`);
   }
 
   // ==========================================================================
@@ -621,24 +529,6 @@ export class HiroApiService {
       method: "POST",
       body: JSON.stringify({ transaction_payload: txPayload }),
     });
-  }
-
-  /**
-   * Get fee priorities from the mempool.
-   * Returns estimated fees (in micro-STX) for different priority levels
-   * and transaction types.
-   *
-   * Cached for 60 seconds to reduce API load.
-   */
-  async getMempoolFees(): Promise<MempoolFeeResponse> {
-    const now = Date.now();
-    if (this.mempoolFeesCache && now < this.mempoolFeesCache.expires) {
-      return this.mempoolFeesCache.data;
-    }
-
-    const data = await this.fetch<MempoolFeeResponse>("/extended/v2/mempool/fees");
-    this.mempoolFeesCache = { data, expires: now + 60000 }; // 60s TTL
-    return data;
   }
 
   // ==========================================================================
