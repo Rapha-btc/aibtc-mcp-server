@@ -479,9 +479,6 @@ export function registerPillarDirectTools(server: McpServer): void {
         const { keyService, session } = await requireActiveKey();
         const api = getPillarApi();
 
-        const sbtcContract =
-          "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token";
-
         // Resolve recipient to a Stacks address before building the hash.
         // principalCV() only accepts SP/ST addresses — BNS/wallet names must be resolved first.
         let resolvedAddress: string;
@@ -518,7 +515,7 @@ export function registerPillarDirectTools(server: McpServer): void {
           amount: uintCV(amount),
           recipient: principalCV(resolvedAddress),
           memo: noneCV(),
-          sip010: principalCV(sbtcContract),
+          sip010: principalCV(SBTC_CONTRACT),
         });
 
         const sigAuth = keyService.sign(structuredData, authId);
@@ -529,7 +526,7 @@ export function registerPillarDirectTools(server: McpServer): void {
           walletAddress: session.smartWallet,
           amount,
           recipient: resolvedAddress,
-          sip010: sbtcContract,
+          sip010: SBTC_CONTRACT,
           tokenName: "sbtc-token",
           sigAuth: formatSigAuthForApi(sigAuth),
         });
