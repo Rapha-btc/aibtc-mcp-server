@@ -20,6 +20,7 @@ import { registerYieldHunterTools } from "./yield-hunter.tools.js";
 import { registerPillarTools } from "./pillar.tools.js";
 import { registerPillarDirectTools } from "./pillar-direct.tools.js";
 import { registerBitcoinTools } from "./bitcoin.tools.js";
+import { registerJingswapTools } from "./jingswap.tools.js";
 
 /**
  * Register all tools with the MCP server
@@ -81,4 +82,7 @@ export function registerAllTools(server: McpServer): void {
 
   // Bitcoin L1 (read-only: balance, fees, UTXOs)
   registerBitcoinTools(server);
+
+  // Jingswap Auction (STX/sBTC blind auction)
+  registerJingswapTools(server);
 }
