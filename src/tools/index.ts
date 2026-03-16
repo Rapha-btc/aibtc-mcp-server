@@ -25,6 +25,7 @@ import { registerBitcoinTools } from "./bitcoin.tools.js";
 import { registerMempoolTools } from "./mempool.tools.js";
 import { registerRelayDiagnosticTools } from "./relay-diagnostic.tools.js";
 import { registerTeneroTools } from "./tenero.tools.js";
+import { registerJingswapTools } from "./jingswap.tools.js";
 import { getSkillForTool } from "./skill-mappings.js";
 
 /**
@@ -131,6 +132,9 @@ export function registerAllTools(server: McpServer): void {
 
   // Tenero market analytics (token info, gainers/losers, trending pools, wallet trades)
   registerTeneroTools(server);
+
+  // Jingswap Auction (blind batch auctions for STX/sBTC)
+  registerJingswapTools(server);
 
   restoreRegisterTool();
 }
