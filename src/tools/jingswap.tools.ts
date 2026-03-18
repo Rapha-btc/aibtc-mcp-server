@@ -33,7 +33,7 @@ interface MarketConfig {
 
 const MARKETS: Record<string, MarketConfig> = {
   "sbtc-stx": {
-    contractName: "sbtc-stx-jingswap",
+    contractName: "sbtc-stx-jingswap-v1",
     tokenBSymbol: "STX",
     tokenBDecimals: 6,
     depositFn: "deposit-stx",
@@ -41,7 +41,7 @@ const MARKETS: Record<string, MarketConfig> = {
     priceUnit: "STX/BTC",
   },
   "sbtc-usdcx": {
-    contractName: "sbtc-usdcx-jingswap",
+    contractName: "sbtc-usdcx-jingswap-v1",
     tokenBSymbol: "USDCx",
     tokenBDecimals: 6,
     tokenBContract: "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx",
@@ -62,7 +62,7 @@ function getMarket(market?: string): MarketConfig {
 }
 
 function apiContractParam(market: MarketConfig): string {
-  return market.contractName === "sbtc-stx-jingswap" ? "" : `?contract=${market.contractName}`;
+  return market.contractName === "sbtc-stx-jingswap-v1" ? "" : `?contract=${market.contractName}`;
 }
 
 async function jingswapGet(path: string): Promise<any> {
