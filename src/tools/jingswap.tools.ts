@@ -510,6 +510,14 @@ export function registerJingswapTools(server: McpServer): void {
         if (data.phase === 0) {
           throw new Error("Cannot settle — auction is still in deposit phase. Close deposits first.");
         }
+        if (data.phase === 1) {
+          const BUFFER_BLOCKS = 30;
+          const blocksIntoBuffer = data.blocksElapsed - 150;
+          const blocksRemaining = Math.max(0, BUFFER_BLOCKS - blocksIntoBuffer);
+          throw new Error(
+            `Cannot settle — auction is in buffer phase. Wait ${blocksRemaining} more blocks (~${blocksRemaining * 2}s) before settling.`
+          );
+        }
         const account = await getAccount();
 
         const result = await callContract(account, {
@@ -564,6 +572,14 @@ export function registerJingswapTools(server: McpServer): void {
         const data = await jingswapGet(`/api/auction/cycle-state${apiContractParam(m)}`);
         if (data.phase === 0) {
           throw new Error("Cannot settle — auction is still in deposit phase. Close deposits first.");
+        }
+        if (data.phase === 1) {
+          const BUFFER_BLOCKS = 30;
+          const blocksIntoBuffer = data.blocksElapsed - 150;
+          const blocksRemaining = Math.max(0, BUFFER_BLOCKS - blocksIntoBuffer);
+          throw new Error(
+            `Cannot settle — auction is in buffer phase. Wait ${blocksRemaining} more blocks (~${blocksRemaining * 2}s) before settling.`
+          );
         }
 
         // Fetch fresh Pyth VAAs from backend
