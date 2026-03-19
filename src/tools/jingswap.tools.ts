@@ -1,7 +1,7 @@
 // Jingswap Auction MCP Tools
 // Query + deposit/cancel tools for sBTC blind auctions on Stacks.
-// Markets: sbtc-stx (SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.sbtc-stx-jingswap)
-//          sbtc-usdcx (SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.sbtc-usdcx-jingswap)
+// Markets: sbtc-stx (SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.sbtc-stx-jing)
+//          sbtc-usdcx (SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.sbtc-usdcx-jing)
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -33,7 +33,7 @@ interface MarketConfig {
 
 const MARKETS: Record<string, MarketConfig> = {
   "sbtc-stx": {
-    contractName: "sbtc-stx-jingswap",
+    contractName: "sbtc-stx-jing",
     tokenBSymbol: "STX",
     tokenBDecimals: 6,
     depositFn: "deposit-stx",
@@ -41,7 +41,7 @@ const MARKETS: Record<string, MarketConfig> = {
     priceUnit: "STX/BTC",
   },
   "sbtc-usdcx": {
-    contractName: "sbtc-usdcx-jingswap",
+    contractName: "sbtc-usdcx-jing",
     tokenBSymbol: "USDCx",
     tokenBDecimals: 6,
     tokenBContract: "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx",
@@ -62,7 +62,7 @@ function getMarket(market?: string): MarketConfig {
 }
 
 function apiContractParam(market: MarketConfig): string {
-  return market.contractName === "sbtc-stx-jingswap" ? "" : `?contract=${market.contractName}`;
+  return market.contractName === "sbtc-stx-jing" ? "" : `?contract=${market.contractName}`;
 }
 
 async function jingswapGet(path: string): Promise<any> {
