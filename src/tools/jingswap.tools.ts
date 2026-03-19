@@ -470,7 +470,7 @@ export function registerJingswapTools(server: McpServer): void {
           contractName: m.contractName,
           functionName: "close-deposits",
           functionArgs: [],
-          postConditionMode: PostConditionMode.Allow,
+          postConditionMode: PostConditionMode.Deny,
           postConditions: [],
         });
 
